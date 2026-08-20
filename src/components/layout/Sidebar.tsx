@@ -207,7 +207,7 @@ function GroupNav({
 
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const { data: session } = useSession();
   const userRole = session?.user?.role || 'MOTHER';
 

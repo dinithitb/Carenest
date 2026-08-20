@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import DashboardHero from '@/components/layout/DashboardHero';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/components/ui';
-import { Brain, Apple, Dumbbell, HeartPulse, Loader2, AlertTriangle, Sparkles, Clock, User } from 'lucide-react';
+import { Apple, Dumbbell, HeartPulse, Loader2, AlertTriangle, Sparkles, Clock, RefreshCw } from 'lucide-react';
 
 interface AICareRecord {
   id: string;
@@ -43,7 +44,7 @@ export default function AiCarePage() {
   const fetchSuggestions = async (careType: string) => {
     setLoading(true);
     setError('');
-    
+
     try {
       const res = await fetch('/api/ai-care', {
         method: 'POST',
@@ -75,15 +76,15 @@ export default function AiCarePage() {
   };
 
   const tabs = [
-    { id: 'FOOD', label: 'Nutrition', icon: Apple, color: 'green', description: 'Healthy eating for pregnancy' },
-    { id: 'EXERCISE', label: 'Exercise', icon: Dumbbell, color: 'blue', description: 'Safe fitness activities' },
-    { id: 'FIRSTAID', label: 'First Aid', icon: HeartPulse, color: 'red', description: 'Emergency care guidance' },
+    { id: 'FOOD', label: 'Nutrition', icon: Apple, color: 'text-emerald-600', bg: 'bg-emerald-50', description: 'Healthy eating for pregnancy' },
+    { id: 'EXERCISE', label: 'Exercise', icon: Dumbbell, color: 'text-blue-600', bg: 'bg-blue-50', description: 'Safe fitness activities' },
+    { id: 'FIRSTAID', label: 'First Aid', icon: HeartPulse, color: 'text-rose-600', bg: 'bg-rose-50', description: 'Emergency care guidance' },
   ];
 
   const formatSuggestions = (text: string) => {
     return text.split('\n').map((line, i) => {
       const trimmedLine = line.trim();
-      
+
       // Main headings (##)
       if (trimmedLine.startsWith('##')) {
         const heading = trimmedLine.replace(/^##\s*/, '').replace(/\*\*/g, '');
@@ -96,7 +97,7 @@ export default function AiCarePage() {
           </div>
         );
       }
-      
+
       // Sub headings (###)
       if (trimmedLine.startsWith('###')) {
         const heading = trimmedLine.replace(/^###\s*/, '').replace(/\*\*/g, '');
@@ -109,7 +110,7 @@ export default function AiCarePage() {
           </div>
         );
       }
-      
+
       // Bold text (**text**)
       if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
         const text = trimmedLine.replace(/\*\*/g, '');
@@ -121,12 +122,12 @@ export default function AiCarePage() {
           </div>
         );
       }
-      
+
       // List items (- or •)
       if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('• ')) {
         const text = trimmedLine.substring(2).replace(/\*\*/g, '');
         const [boldPart, ...rest] = text.split(' - ');
-        
+
         return (
           <div key={i} className="my-2 ml-4">
             <div className="flex items-start gap-3">
@@ -143,11 +144,11 @@ export default function AiCarePage() {
           </div>
         );
       }
-      
+
       // Regular paragraphs
       if (trimmedLine && !trimmedLine.startsWith('#')) {
         const cleanText = trimmedLine.replace(/\*\*/g, '');
-        
+
         // Check if it's a disclaimer or important note
         if (cleanText.toLowerCase().includes('disclaimer') || cleanText.toLowerCase().includes('important')) {
           return (
@@ -161,66 +162,63 @@ export default function AiCarePage() {
             </div>
           );
         }
-        
+
         return (
           <div key={i} className="my-3">
             <p className="text-gray-700 leading-relaxed">{cleanText}</p>
           </div>
         );
       }
-      
+
       // Empty lines for spacing
       if (!trimmedLine) {
         return <div key={i} className="h-2" />;
       }
-      
+
       return null;
     }).filter(Boolean);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-teal-600 rounded-2xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <Brain className="h-8 w-8" />
-          <h1 className="text-2xl font-bold">AI-Assisted Care Module</h1>
-        </div>
-        <p className="text-purple-100">Get personalized health guidance powered by artificial intelligence</p>
-        <div className="mt-4 flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span>Welcome, {session?.user?.name}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>{new Date().toLocaleDateString()}</span>
-          </div>
+      <DashboardHero
+        title="AI-Assisted Care Module"
+        subtitle="Get personalized health guidance for nutrition, exercise, and care during your pregnancy"
+        pillLabel="AI Guidance"
+        pillColorClass="text-[#7C3AED]"
+        actions={(
+          <Button
+            variant="outline"
+            className="!bg-white hover:!bg-gray-100 !text-gray-900 font-bold rounded-xl !border !border-gray-200 shadow-sm transition-all cursor-pointer"
+            onClick={() => fetchSuggestions(activeTab)}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 text-gray-700 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        )}
+      />
+
+      {/* Disclaimer Card */}
+      <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm text-amber-900 font-semibold">Important Disclaimer</p>
+          <p className="text-sm text-amber-800/90 mt-0.5 leading-relaxed">
+            This information is for general awareness only and should not replace professional medical advice.
+            Always consult your healthcare provider or assigned midwife for personalized clinical guidance.
+          </p>
         </div>
       </div>
 
-      {/* Disclaimer */}
-      <Card className="border-yellow-200 bg-yellow-50">
-        <CardContent className="flex items-start gap-3 p-4">
-          <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm text-yellow-800 font-medium mb-1">Important Medical Disclaimer</p>
-            <p className="text-sm text-yellow-700">
-              This AI-generated information is for educational purposes only and should not replace professional medical advice. 
-              Always consult your healthcare provider, midwife, or doctor for personalized medical guidance and before making any health decisions.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Pregnancy Week Selector */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 min-w-fit">
-              Current Pregnancy Week:
+        <CardContent className="p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <label className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+              Select Pregnancy Stage:
             </label>
-            <div className="flex-1">
+            <div className="flex-1 flex items-center gap-4">
               <input
                 type="range"
                 min="1"
@@ -245,34 +243,28 @@ export default function AiCarePage() {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* Navigation Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <Button
+            <button
               key={tab.id}
-              variant={isActive ? 'default' : 'outline'}
               onClick={() => {
                 setActiveTab(tab.id as 'FOOD' | 'EXERCISE' | 'FIRSTAID');
                 setSuggestions('');
                 setError('');
               }}
-              className={`h-auto p-4 flex flex-col items-center gap-2 ${
-                isActive 
-                  ? 'bg-teal-600 hover:bg-teal-700 text-white border-teal-600' 
-                  : 'hover:bg-gray-50 border-gray-200'
+              className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? 'bg-gray-900 text-white shadow-md'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
             >
-              <Icon className="h-6 w-6" />
-              <div className="text-center">
-                <div className="font-semibold">{tab.label}</div>
-                <div className={`text-xs ${isActive ? 'text-teal-100' : 'text-gray-500'}`}>
-                  {tab.description}
-                </div>
-              </div>
-            </Button>
+              <Icon className={`h-4 w-4 ${isActive ? 'text-teal-400' : 'text-gray-500'}`} />
+              {tab.label}
+            </button>
           );
         })}
       </div>
@@ -281,18 +273,17 @@ export default function AiCarePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {activeTab === 'FOOD' && <Apple className="h-5 w-5 text-green-600" />}
-                {activeTab === 'EXERCISE' && <Dumbbell className="h-5 w-5 text-blue-600" />}
-                {activeTab === 'FIRSTAID' && <HeartPulse className="h-5 w-5 text-red-600" />}
-                {activeTab === 'FOOD' && 'Nutrition Guidance'}
-                {activeTab === 'EXERCISE' && 'Safe Exercise Recommendations'}
-                {activeTab === 'FIRSTAID' && 'Basic First Aid Information'}
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b border-gray-100 bg-gray-50/50">
+              <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-teal-600" />
+                {activeTab === 'FOOD' && 'Personalized Nutrition Guidance'}
+                {activeTab === 'EXERCISE' && 'Safe Trimester Exercise Recommendations'}
+                {activeTab === 'FIRSTAID' && 'Essential First Aid & Care Information'}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+
+            <CardContent className="p-6">
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
@@ -305,35 +296,31 @@ export default function AiCarePage() {
 
               {!suggestions && !loading && !error && (
                 <div className="text-center py-12">
-                  <div className="mb-6">
-                    {activeTab === 'FOOD' && <Apple className="h-20 w-20 text-green-200 mx-auto" />}
-                    {activeTab === 'EXERCISE' && <Dumbbell className="h-20 w-20 text-blue-200 mx-auto" />}
-                    {activeTab === 'FIRSTAID' && <HeartPulse className="h-20 w-20 text-red-200 mx-auto" />}
+                  <div className="mb-4 inline-flex p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                    {activeTab === 'FOOD' && <Apple className="h-12 w-12 text-emerald-600" />}
+                    {activeTab === 'EXERCISE' && <Dumbbell className="h-12 w-12 text-blue-600" />}
+                    {activeTab === 'FIRSTAID' && <HeartPulse className="h-12 w-12 text-rose-600" />}
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Get AI-Powered {tabs.find(t => t.id === activeTab)?.label} Guidance
-                  </h3>
-                  <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                    {activeTab === 'FOOD' && 'Receive personalized nutrition advice based on your current pregnancy week and health needs.'}
-                    {activeTab === 'EXERCISE' && 'Discover safe and effective exercises tailored to your trimester and fitness level.'}
-                    {activeTab === 'FIRSTAID' && 'Learn essential first aid knowledge for pregnancy emergencies and newborn care situations.'}
+                  <p className="text-sm text-gray-600 max-w-md mx-auto mb-6 leading-relaxed">
+                    {activeTab === 'FOOD' && `Get tailored nutritional guidance and meal recommendations for Week ${pregnancyWeek} of your pregnancy.`}
+                    {activeTab === 'EXERCISE' && `Discover safe, low-impact exercise routines appropriate for Week ${pregnancyWeek}.`}
+                    {activeTab === 'FIRSTAID' && 'Review essential first-aid guidelines for common pregnancy discomforts and warning signs.'}
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => fetchSuggestions(activeTab)}
-                    size="lg"
-                    className="bg-teal-600 hover:bg-teal-700"
+                    className="rounded-xl px-6 py-2.5 font-semibold"
                   >
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Generate {tabs.find(t => t.id === activeTab)?.label} Suggestions
+                    Generate {tabs.find((t) => t.id === activeTab)?.label} Advice
                   </Button>
                 </div>
               )}
 
               {loading && (
-                <div className="text-center py-12">
-                  <Loader2 className="h-16 w-16 text-teal-600 mx-auto animate-spin mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Generating Personalized Suggestions</h3>
-                  <p className="text-gray-500">Our AI is analyzing your pregnancy stage and creating tailored advice...</p>
+                <div className="text-center py-14">
+                  <Loader2 className="h-10 w-10 text-teal-600 mx-auto animate-spin mb-4" />
+                  <p className="text-sm font-medium text-gray-700">Generating personalized AI health guidance...</p>
+                  <p className="text-xs text-gray-400 mt-1">Analyzing pregnancy week and clinical recommendations</p>
                 </div>
               )}
 
@@ -353,31 +340,31 @@ export default function AiCarePage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Suggestions Content */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                     <div className="prose prose-gray max-w-none">
                       {formatSuggestions(suggestions)}
                     </div>
                   </div>
-                  
+
                   {/* Action Buttons */}
                   <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => fetchSuggestions(activeTab)}
-                      className="flex items-center gap-2 hover:bg-teal-50 hover:border-teal-300"
+                      className="flex items-center gap-2 hover:bg-teal-50 hover:border-teal-300 rounded-xl font-semibold"
                     >
-                      <Sparkles className="h-4 w-4" />
-                      Generate New Suggestions
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Regenerate Suggestions
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => {
                         setSuggestions('');
                         setError('');
                       }}
-                      className="hover:bg-gray-50"
+                      className="hover:bg-gray-50 rounded-xl font-semibold"
                     >
                       Clear
                     </Button>
@@ -406,10 +393,13 @@ export default function AiCarePage() {
               {recentRecords.length > 0 ? (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {recentRecords.slice(0, 5).map((record) => (
-                    <div key={record.id} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                         onClick={() => setSuggestions(record.suggestions)}>
+                    <div
+                      key={record.id}
+                      className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                      onClick={() => setSuggestions(record.suggestions)}
+                    >
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="default" className="text-xs">
                           Week {record.pregnancyWeek || 'N/A'}
                         </Badge>
                         <span className="text-xs text-gray-500">
@@ -425,7 +415,9 @@ export default function AiCarePage() {
               ) : (
                 <div className="text-center py-8">
                   <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">No recent {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} records</p>
+                  <p className="text-sm text-gray-500">
+                    No recent {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} records
+                  </p>
                 </div>
               )}
             </CardContent>

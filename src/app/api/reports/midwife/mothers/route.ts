@@ -58,11 +58,9 @@ export async function POST(req: NextRequest) {
         pregnancies: {
           where: { status: 'ACTIVE' },
           select: {
-            lmp: true,
-            edd: true,
+            lastMenstrualPeriod: true,
+            expectedDeliveryDate: true,
             highRisk: true,
-            gravidaNumber: true,
-            parityNumber: true,
           },
         },
         visits: {
@@ -196,8 +194,8 @@ export async function POST(req: NextRequest) {
         (index + 1).toString(),
         mother.user.name || 'N/A',
         mother.user.phone || 'N/A',
-        pregnancy?.lmp ? new Date(pregnancy.lmp).toLocaleDateString() : 'N/A',
-        pregnancy?.edd ? new Date(pregnancy.edd).toLocaleDateString() : 'N/A',
+        pregnancy?.lastMenstrualPeriod ? new Date(pregnancy.lastMenstrualPeriod).toLocaleDateString() : 'N/A',
+        pregnancy?.expectedDeliveryDate ? new Date(pregnancy.expectedDeliveryDate).toLocaleDateString() : 'N/A',
         pregnancy?.highRisk ? 'High Risk' : 'Normal',
         `${completedInPeriod}/${visitsInPeriod}`,
         mother.user.isActive ? 'Active' : 'Inactive',
@@ -232,8 +230,8 @@ export async function POST(req: NextRequest) {
             (index + 1).toString(),
             mother.user.name || 'N/A',
             mother.user.phone || 'N/A',
-            pregnancy?.edd ? new Date(pregnancy.edd).toLocaleDateString() : 'N/A',
-            `G${pregnancy?.gravidaNumber || 0}P${pregnancy?.parityNumber || 0}`,
+            pregnancy?.expectedDeliveryDate ? new Date(pregnancy.expectedDeliveryDate).toLocaleDateString() : 'N/A',
+            `G${(pregnancy as any)?.gravidaNumber || 0}P${(pregnancy as any)?.parityNumber || 0}`,
           ];
         });
 

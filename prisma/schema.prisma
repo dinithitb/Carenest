@@ -25,6 +25,12 @@ model User {
   notifySystemUpdates     Boolean        @default(true)
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  notifyChatMessages      Boolean        @default(true)
+  notifySystemUpdates     Boolean        @default(true)
+  notifyVaccinationAlerts Boolean        @default(true)
+  notifyVisitReminders    Boolean        @default(true)
   auditLogs               AuditLog[]
   receivedMessages        ChatMessage[]  @relation("ReceivedMessages")
   sentMessages            ChatMessage[]  @relation("SentMessages")
@@ -55,6 +61,17 @@ model Mother {
   locationUpdatedAt      DateTime?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
+  assignedMidwifeId      String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  latitude               Decimal?                @db.Decimal(10, 7)
+  locationUpdatedAt      DateTime?
+  longitude              Decimal?                @db.Decimal(10, 7)
+  mohRegNumber           String                  @default("")
+  mohRegistrationNumber  String?
+  nicNumber              String                  @default("")
+  needsSpecialAttention  Boolean                 @default(false)
+  height                 Decimal?                @db.Decimal(5, 2)
   aiCareRecords          AICareRecord[]
   children               Child[]
   documents              Document[]
@@ -120,6 +137,10 @@ model Child {
   gestationalAgeWeeks    Int?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  gestationalAgeWeeks    Int?
+  isPreterm              Boolean                 @default(false)
   childGrowthRecords     ChildGrowthRecord[]
   mother                 Mother                  @relation(fields: [motherId], references: [id], onDelete: Cascade)
   growthRecords          GrowthRecord[]
@@ -148,6 +169,15 @@ model GrowthRecord {
   heightStatus       String?
   bmiStatus          String?
   createdAt          DateTime @default(now())
+  createdAt          DateTime @default(now())
+  ageMonths          Int?
+  bmiStatus          String?
+  correctedAgeMonths Int?
+  heightStatus       String?
+  weightStatus       String?
+  zScoreBmi          Decimal? @db.Decimal(5, 2)
+  zScoreHeight       Decimal? @db.Decimal(5, 2)
+  zScoreWeight       Decimal? @db.Decimal(5, 2)
   child              Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@map("growth_records")
@@ -182,6 +212,8 @@ model Visit {
   fetalHeartRate       Int?
   symptoms             String?
   recommendations      String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
   postnatalVisitNumber Int?
   postnatalWindowStart DateTime?
   postnatalWindowEnd   DateTime?

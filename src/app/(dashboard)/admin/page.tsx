@@ -14,7 +14,7 @@ interface RecentRegistration {
   id: string;
   name?: string;
   email?: string;
-  createdAt?: string; // Add createdAt property
+  createdAt?: string | Date;
 }
 
 interface DashboardData {

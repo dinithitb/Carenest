@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { computeGrowthMetrics } from '@/lib/growthUtils';
 
 // Get children
 export async function GET(req: NextRequest) {
@@ -88,6 +89,8 @@ export async function POST(req: NextRequest) {
       birthTime,
       birthPlace,
       healthNotes,
+      isPreterm,
+      gestationalAgeWeeks,
     } = body;
 
     if (!motherId) {
@@ -118,6 +121,8 @@ export async function POST(req: NextRequest) {
         birthTime,
         birthPlace,
         healthNotes,
+        isPreterm: Boolean(isPreterm),
+        gestationalAgeWeeks: gestationalAgeWeeks ? parseInt(gestationalAgeWeeks) : null,
       },
     });
 
@@ -132,13 +137,35 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Create initial growth record
+    // Create initial birth growth record with computed metrics
     if (birthWeight || birthHeight) {
+      const birthDateObj = new Date(birthDate);
+
+      const computed = computeGrowthMetrics({
+        birthDate: birthDateObj,
+        recordDate: birthDateObj,
+        gender: gender as 'MALE' | 'FEMALE',
+        weightKg: birthWeight ? parseFloat(birthWeight) : null,
+        heightCm: birthHeight ? parseFloat(birthHeight) : null,
+        isPreterm: Boolean(isPreterm),
+        gestationalAgeWeeks: gestationalAgeWeeks ? parseInt(gestationalAgeWeeks) : null,
+      });
+
       await prisma.growthRecord.create({
         data: {
           childId: child.id,
+          recordDate: birthDateObj,
           weight: birthWeight ? parseFloat(birthWeight) : null,
           height: birthHeight ? parseFloat(birthHeight) : null,
+          bmi: computed.bmi,
+          ageMonths: 0,
+          correctedAgeMonths: computed.correctedAgeMonths,
+          zScoreWeight: computed.weightStatus?.zScore ?? null,
+          zScoreHeight: computed.heightStatus?.zScore ?? null,
+          zScoreBmi: computed.bmiStatus?.zScore ?? null,
+          weightStatus: computed.weightStatus?.status ?? null,
+          heightStatus: computed.heightStatus?.status ?? null,
+          bmiStatus: computed.bmiStatus?.status ?? null,
           notes: 'Birth measurements',
         },
       });
@@ -242,7 +269,7 @@ export async function POST(req: NextRequest) {
         action: 'CHILD_REGISTERED',
         entity: 'Child',
         entityId: child.id,
-        details: `Child ${name} registered for ${mother?.user?.name || 'mother'}. Generated vaccinations and postnatal visits.`,
+        details: `Child ${name} registered for ${mother?.user?.name || 'mother'}${Boolean(isPreterm) ? ' (preterm)' : ''}. Generated vaccinations and postnatal visits.`,
       },
     });
 
@@ -255,40 +282,6 @@ export async function POST(req: NextRequest) {
     console.error('Create child error:', error);
     return NextResponse.json(
       { error: 'Failed to register child' },
-      { status: 500 }
-    );
-  }
-}
-
-// Update child
-export async function PUT(req: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await req.json();
-    const { id, ...updateData } = body;
-
-    if (updateData.birthDate) {
-      updateData.birthDate = new Date(updateData.birthDate);
-    }
-
-    const child = await prisma.child.update({
-      where: { id },
-      data: updateData,
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Child updated',
-      data: child,
-    });
-  } catch (error) {
-    console.error('Update child error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update child' },
       { status: 500 }
     );
   }

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     // Calculate statistics
     const totalVisits = visits.length;
     const completedVisits = visits.filter((v) => v.status === 'COMPLETED').length;
-    const pendingVisits = visits.filter((v) => v.status === 'PENDING').length;
+    const pendingVisits = visits.filter((v) => v.status === 'SCHEDULED').length;
     const cancelledVisits = visits.filter((v) => v.status === 'CANCELLED').length;
     const completionRate = totalVisits > 0 ? Math.round((completedVisits / totalVisits) * 100) : 0;
 

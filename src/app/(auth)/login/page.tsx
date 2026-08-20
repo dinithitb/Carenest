@@ -37,7 +37,7 @@ export default function LoginPage() {
           setActivationPopupMessage(result.error);
         }
       } else {
-        router.push(result?.url ?? '/dashboard');
+        window.location.href = '/dashboard';
       }
     } catch (err) {
       setError('An error occurred. Please try again.');

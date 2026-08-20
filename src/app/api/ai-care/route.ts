@@ -220,6 +220,7 @@ export async function GET(req: NextRequest) {
 
 function getMockSuggestions(careType: string, pregnancyWeek?: number): string {
   const trimester = pregnancyWeek ? (pregnancyWeek <= 12 ? 'First' : pregnancyWeek <= 26 ? 'Second' : 'Third') : '';
+  const weekNum = pregnancyWeek ?? 20;
   
   switch (careType) {
     case 'FOOD':
@@ -273,11 +274,11 @@ Important Disclaimer: This information is for educational purposes only. Always 
 - Pelvic Floor Exercises - Kegel exercises to strengthen core muscles
 
 ### Exercise Modifications for ${trimester || 'Your'} Trimester:
-${pregnancyWeek <= 12 ? 
+${weekNum <= 12 ? 
   `- Focus on establishing a routine if you're new to exercise
 - Listen to your body as energy levels may fluctuate
 - Stay hydrated as morning sickness may affect fluid intake` :
-  pregnancyWeek <= 26 ?
+  weekNum <= 26 ?
   `- Avoid exercises lying flat on your back after 16 weeks
 - Modify core exercises to avoid diastasis recti
 - Use proper support (maternity workout clothes)` :

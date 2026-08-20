@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
         pregnancies: {
           where: { status: 'ACTIVE' },
           select: {
-            lmp: true,
-            edd: true,
+            lastMenstrualPeriod: true,
+            expectedDeliveryDate: true,
             highRisk: true,
           },
         },
@@ -136,8 +136,8 @@ export async function POST(req: NextRequest) {
         mother.user.name || 'N/A',
         mother.user.email,
         mother.assignedMidwife?.user.name || 'Unassigned',
-        pregnancy?.lmp ? new Date(pregnancy.lmp).toLocaleDateString() : 'N/A',
-        pregnancy?.edd ? new Date(pregnancy.edd).toLocaleDateString() : 'N/A',
+        pregnancy?.lastMenstrualPeriod ? new Date(pregnancy.lastMenstrualPeriod).toLocaleDateString() : 'N/A',
+        pregnancy?.expectedDeliveryDate ? new Date(pregnancy.expectedDeliveryDate).toLocaleDateString() : 'N/A',
         pregnancy?.highRisk ? 'Yes' : 'No',
         mother.user.isActive ? 'Active' : 'Inactive',
       ];

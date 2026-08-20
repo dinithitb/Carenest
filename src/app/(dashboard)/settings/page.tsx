@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select } from '@/components/ui';
+import DashboardHero from '@/components/layout/DashboardHero';
 import { User, Lock, Bell, Globe, Save, MapPin } from 'lucide-react';
 
 const LocationPickerMap = dynamic(
@@ -47,6 +48,13 @@ export default function SettingsPage() {
     chatMessages: true,
     systemUpdates: true,
   });
+
+  const selectedLatitude = latitude ? Number(latitude) : null;
+  const selectedLongitude = longitude ? Number(longitude) : null;
+  const handleMapPick = (lat: number, lng: number) => {
+    setLatitude(lat.toFixed(7));
+    setLongitude(lng.toFixed(7));
+  };
 
   const isMother = session?.user?.role === 'MOTHER';
   const hasGoogleMapsApiKey = Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
@@ -119,7 +127,7 @@ export default function SettingsPage() {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
       return;
-    }
+  };
 
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
@@ -133,16 +141,7 @@ export default function SettingsPage() {
         alert('Unable to get current location. Please allow location access and try again.');
       }
     );
-  };
-
-  const selectedLatitude = latitude.trim() === '' ? null : Number(latitude);
-  const selectedLongitude = longitude.trim() === '' ? null : Number(longitude);
-
-  const handleMapPick = (lat: number, lng: number) => {
-    setLatitude(lat.toFixed(7));
-    setLongitude(lng.toFixed(7));
-  };
-
+    };
   const handleSaveLocation = async () => {
     if (!isMother) return;
 
@@ -395,28 +394,31 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500">Manage your account settings and preferences</p>
-      </div>
+      <DashboardHero
+        title="Account Settings"
+        subtitle="Manage your profile information, password security, notifications, and preferences"
+        pillLabel="Preferences"
+      />
 
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         {/* Sidebar */}
-        <div className="w-64">
+        <div className="w-full md:w-64 shrink-0">
           <Card>
-            <CardContent className="p-2">
+            <CardContent className="p-2 space-y-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-left transition-colors ${activeTab === tab.id
-                        ? 'bg-teal-50 text-teal-700'
-                        : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-left transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-gray-900 text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-teal-400' : 'text-gray-400'}`} />
                     {tab.label}
                   </button>
                 );

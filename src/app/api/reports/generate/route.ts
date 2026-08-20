@@ -27,11 +27,11 @@ export async function POST(req: NextRequest) {
     
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text('CareNest', 20, 20);
     
     doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.text('Maternal Health Management System', 20, 28);
     
     // Report title based on role and type
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text(reportTitle, 210 - 20, 16, { align: 'right' });
     doc.setFontSize(8);
     doc.text(`Generated: ${currentDate}`, 210 - 20, 24, { align: 'right' });
@@ -64,13 +64,13 @@ export async function POST(req: NextRequest) {
     // Add Key Statistics section
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(16);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text('Key Performance Statistics', 20, yPos);
     yPos += 15;
     
     // Statistics based on user role
     doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     
     if (userRole === 'ADMIN') {
       doc.text('• Total Active Mothers: 245', 30, yPos);
@@ -100,12 +100,12 @@ export async function POST(req: NextRequest) {
     
     // Add Sample Data section
     doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text('Sample Data Overview', 20, yPos);
     yPos += 15;
     
     doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     
     // Sample data based on role
     if (userRole === 'ADMIN') {
@@ -200,12 +200,12 @@ export async function POST(req: NextRequest) {
     // Add Key Insights section
     yPos += 10;
     doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text('Key Insights & Recommendations', 20, yPos);
     yPos += 10;
     
     doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     
     if (userRole === 'ADMIN') {
       doc.text('• System operates at 98% efficiency with excellent patient satisfaction scores', 20, yPos);
@@ -233,13 +233,13 @@ export async function POST(req: NextRequest) {
     // Add Next Steps section
     yPos += 10;
     doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(20, 184, 166);
     doc.text('Recommended Next Steps', 20, yPos);
     yPos += 10;
     
     doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
     
     if (userRole === 'ADMIN') {

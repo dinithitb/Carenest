@@ -15,6 +15,24 @@ interface Visit {
   mother?: { user?: { name?: string } } | null;
 }
 
+interface PregnancyOverviewItem {
+  id: string;
+  motherName?: string;
+  highRisk?: boolean;
+  currentWeek?: number;
+  progress?: {
+    weeks: number;
+    days: number;
+    month: number;
+    percentComplete: number;
+    expectedDeliveryDate: string;
+    daysRemaining: number;
+    isOverdue: boolean;
+    trimester: number;
+    trimesterLabel: string;
+  };
+}
+
 interface DashboardData {
   assignedMothers: number;
   activePregnancies: number;
@@ -23,7 +41,7 @@ interface DashboardData {
   pendingVaccinations: number;
   completedVisitsThisMonth: number;
   highRiskCases: number;
-  pregnancyOverview: Array<Record<string, unknown>>;
+  pregnancyOverview: PregnancyOverviewItem[];
 }
 
 export default function MidwifeDashboard() {
@@ -338,7 +356,7 @@ export default function MidwifeDashboard() {
           </div>
 
           <div className="p-6 space-y-4">
-            {dashboardData.pregnancyOverview.map((item: Record<string, unknown> & { id?: string; highRisk?: boolean }, idx: number) => {
+            {dashboardData.pregnancyOverview.map((item: PregnancyOverviewItem, idx: number) => {
               // Cycle avatar styles
               const avatarStyles = [
                 { bg: 'bg-blue-50', text: 'text-[#2563EB]', border: 'border-blue-100' },

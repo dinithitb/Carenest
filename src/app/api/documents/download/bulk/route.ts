@@ -4,16 +4,8 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { PassThrough } from 'stream';
 
-// archiver v8 exports ZipArchive as a named class; bypass broken type definitions
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { ZipArchive } = require('archiver') as {
-    ZipArchive: new (opts: { zlib: { level: number } }) => {
-        pipe: (dest: NodeJS.WritableStream) => void;
-        append: (source: Buffer, opts: { name: string }) => void;
-        finalize: () => Promise<void>;
-        on: (event: string, cb: (...args: unknown[]) => void) => void;
-    };
-};
+// @ts-expect-error archiver types mismatch with v8 named export
+import { ZipArchive } from 'archiver';
 
 export async function GET(req: NextRequest) {
     try {

@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
         visitDate: {
           lt: new Date(),
         },
-        status: 'PENDING',
+        status: 'SCHEDULED',
       },
     });
 

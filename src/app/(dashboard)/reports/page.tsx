@@ -12,6 +12,8 @@ export default function ReportsPage() {
   const { data: session } = useSession();
   const [reportType, setReportType] = useState('mothers');
   const [dateRange, setDateRange] = useState('month');
+  const [exportFormat, setExportFormat] = useState<'xlsx' | 'pdf'>('xlsx');
+  const [reportMotherId, setReportMotherId] = useState('');
 
   // Custom Date Picker States
   const [startDate, setStartDate] = useState('');
@@ -42,21 +44,7 @@ export default function ReportsPage() {
   const [uploadType, setUploadType] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  
-  // Recent Documents States
-  const [recentDocuments, setRecentDocuments] = useState<any[]>([]);
-  const [loadingRecent, setLoadingRecent] = useState(false);
 
-  // Fetch initial data
-  useEffect(() => {
-    fetchMothers();
-    fetchRecentDocuments();
-    if (session?.user?.role === 'ADMIN' || session?.user?.role === 'MIDWIFE') {
-      fetchDocumentTypes();
-    }
-  }, [session]);
-
-  // Fetch functions (hoisted so they can be referenced in effects)
   const fetchMothers = async () => {
     try {
       const res = await fetch('/api/mothers?pageSize=100');
@@ -81,21 +69,6 @@ export default function ReportsPage() {
     }
   };
 
-  const fetchRecentDocuments = async () => {
-    setLoadingRecent(true);
-    try {
-      const res = await fetch('/api/documents/recent?limit=10');
-      if (res.ok) {
-        const data = await res.json();
-        setRecentDocuments(data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to load recent documents');
-    } finally {
-      setLoadingRecent(false);
-    }
-  };
-  // Fetch initial data
   useEffect(() => {
     (async () => {
       await fetchMothers();
@@ -205,7 +178,6 @@ export default function ReportsPage() {
         if (fileInput) fileInput.value = '';
         
         await fetchMotherDocuments(selectedMotherId);
-        await fetchRecentDocuments(); // Refresh recent documents
         alert('Document uploaded successfully!');
       } else {
         const data = await res.json();
@@ -232,7 +204,6 @@ export default function ReportsPage() {
 
       if (res.ok) {
         await fetchMotherDocuments(selectedMotherId);
-        await fetchRecentDocuments(); // Refresh recent documents
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to delete document.');
@@ -251,49 +222,79 @@ export default function ReportsPage() {
     { value: 'summary', label: 'Summary Report', icon: BarChart3 },
   ];
 
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const filenameFromResponse = (res: Response, fallback: string) => {
+    const header = res.headers.get('Content-Disposition') || '';
+    const match = header.match(/filename="([^"]+)"/);
+    return match?.[1] || fallback;
+  };
+
   const generateReport = async () => {
-    // Basic frontend validation for custom range selection
     if (dateRange === 'custom' && (!startDate || !endDate)) {
       alert('Please select both a start date and an end date.');
       return;
     }
 
     setLoading(true);
+    setError('');
 
     try {
-      // Use the simple sample report generator
-      const apiEndpoint = `/api/reports/generate`;
-      
-      const requestBody = {
-        reportType: reportType,
-        range: dateRange,
-        ...(dateRange === 'custom' && { startDate, endDate }),
-      };
+      const today = new Date().toISOString().split('T')[0];
+      const rangeQuery =
+        dateRange === 'custom'
+          ? `range=custom&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+          : `range=${encodeURIComponent(dateRange)}`;
 
-      const res = await fetch(apiEndpoint, {
+      if (reportType === 'summary') {
+        const motherQuery = reportMotherId ? `&motherId=${encodeURIComponent(reportMotherId)}` : '';
+        const res = await fetch(`/api/reports/summary?format=${exportFormat}&${rangeQuery}${motherQuery}`);
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          alert(`Failed to generate report: ${data.error || 'Unknown error'}`);
+          return;
+        }
+
+        const blob = await res.blob();
+        const fallback = `mothers-summary-report-${today}.${exportFormat === 'xlsx' ? 'xlsx' : 'pdf'}`;
+        downloadBlob(blob, filenameFromResponse(res, fallback));
+        return;
+      }
+
+      const role = session?.user?.role === 'MIDWIFE' ? 'midwife' : 'admin';
+      const typedEndpoint =
+        role === 'midwife' && reportType === 'vaccinations'
+          ? '/api/reports/generate'
+          : `/api/reports/${role}/${reportType}`;
+
+      const res = await fetch(typedEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reportType,
+          range: dateRange,
+          ...(dateRange === 'custom' && { startDate, endDate }),
+        }),
       });
 
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${reportType}-report-${new Date().toISOString().split('T')[0]}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        alert('Report downloaded successfully!');
-      } else {
-        const error = await res.json();
-        alert(`Failed to generate report: ${error.error || 'Unknown error'}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Failed to generate report: ${data.error || 'Unknown error'}`);
+        return;
       }
+
+      const blob = await res.blob();
+      downloadBlob(blob, filenameFromResponse(res, `${reportType}-report-${today}.pdf`));
     } catch (err) {
       console.error('Report generation error:', err);
       alert('An error occurred while generating your report. Please try again.');
@@ -436,6 +437,32 @@ export default function ReportsPage() {
               </div>
             )}
 
+            {reportType === 'summary' && (
+              <>
+                <Select
+                  label="Mother"
+                  value={reportMotherId}
+                  onChange={(e) => setReportMotherId(e.target.value)}
+                  options={[
+                    { value: '', label: 'All mothers' },
+                    ...mothers.map((m) => ({
+                      value: m.id,
+                      label: m.user?.name || m.id,
+                    })),
+                  ]}
+                />
+                <Select
+                  label="Export Format"
+                  value={exportFormat}
+                  onChange={(e) => setExportFormat(e.target.value as 'xlsx' | 'pdf')}
+                  options={[
+                    { value: 'xlsx', label: 'Excel (.xlsx)' },
+                    { value: 'pdf', label: 'PDF (.pdf)' },
+                  ]}
+                />
+              </>
+            )}
+
             <Button className="w-full mt-2" onClick={generateReport} isLoading={loading}>
               <FileText className="h-4 w-4 mr-2" />
               Generate Report
@@ -468,7 +495,7 @@ export default function ReportsPage() {
                       {report.value === 'mothers' && 'List of registered mothers with details'}
                       {report.value === 'visits' && 'Visit history and statistics'}
                       {report.value === 'vaccinations' && 'Vaccination coverage report'}
-                      {report.value === 'summary' && 'Overall system summary'}
+                      {report.value === 'summary' && 'Per-mother Excel/PDF with visits, vaccines, Thriposha, and records'}
                     </p>
                   </div>
                 );
@@ -478,96 +505,10 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      {/* Recent Uploaded Documents */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Uploaded Documents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingRecent ? (
-            <div className="py-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-teal-500 mx-auto"></div>
-              <p className="text-sm text-gray-500 mt-2">Loading recent documents...</p>
-            </div>
-          ) : recentDocuments.length === 0 ? (
-            <div className="py-8 text-center text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p className="font-medium">No documents uploaded yet</p>
-              <p className="text-sm mt-1">Recently uploaded documents will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentDocuments.map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="p-2 bg-teal-50 rounded-lg shrink-0">
-                      <FileText className="h-5 w-5 text-teal-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate" title={doc.fileName}>
-                        {doc.fileName}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                        <span className="font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded text-xs">
-                          {doc.documentType.name}
-                        </span>
-                        <span>•</span>
-                        <span>{doc.mother?.user?.name || 'Unknown'}</span>
-                        <span>•</span>
-                        <span>{new Date(doc.uploadedAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 ml-4 shrink-0">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => window.open(doc.fileUrl, '_blank')}
-                      title="View document"
-                    >
-                      View
-                    </Button>
-                    <a
-                      href={doc.fileUrl}
-                      download={doc.fileName}
-                      className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
-                      title="Download document"
-                    >
-                      <Download className="h-4 w-4" />
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="space-y-3">
-            {[
-              { name: 'Monthly Summary - March 2026', date: '2026-03-31', type: 'Summary' },
-              { name: 'Vaccination Report - Q1 2026', date: '2026-03-15', type: 'Vaccinations' },
-              { name: 'Mother Registration Report', date: '2026-03-01', type: 'Mothers' },
-            ].map((report, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg text-gray-900">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="font-medium text-gray-900">{report.name}</p>
-                    <p className="text-sm text-gray-600">{report.type} • {report.date}</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="text-gray-900">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Patient Documents Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Patient Documents Management</CardTitle>
+          <CardTitle>Mother Documents Management</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -628,7 +569,7 @@ export default function ReportsPage() {
 
             {/* Right: Existing Documents */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Patient&apos;s Documents</h3>
+              <h3 className="text-lg font-medium text-gray-900">Mother&apos;s Document</h3>
               {!selectedMotherId ? (
                 <div className="p-8 text-center border-2 border-dashed rounded-lg text-gray-500">
                   Select a patient to view their documents.

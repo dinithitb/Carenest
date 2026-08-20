@@ -395,7 +395,7 @@ export default function MidwifeReportsPage() {
       {/* Patient Documents Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Patient Documents Management</CardTitle>
+          <CardTitle>Mother Documents Management</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {error && (
@@ -463,7 +463,7 @@ export default function MidwifeReportsPage() {
 
             {/* Right: Existing Documents */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Patient&apos;s Documents</h3>
+              <h3 className="text-lg font-medium">Mother&apos;s Document</h3>
               {!selectedMotherId ? (
                 <div className="p-8 text-center border-2 border-dashed rounded-lg text-gray-500">
                   Select a patient to view their documents.

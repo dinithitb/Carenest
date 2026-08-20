@@ -48,13 +48,6 @@ export async function POST(req: NextRequest) {
         child: {
           select: { name: true },
         },
-        midwife: {
-          include: {
-            user: {
-              select: { name: true },
-            },
-          },
-        },
       },
       orderBy: {
         scheduledDate: 'desc',
@@ -159,7 +152,7 @@ export async function POST(req: NextRequest) {
       vacc.childId ? 'Child' : 'Mother',
       new Date(vacc.scheduledDate).toLocaleDateString(),
       vacc.status,
-      vacc.midwife?.user.name || 'Unassigned',
+      vacc.administeredBy || 'Unassigned',
     ]);
 
     pdf.addTable({

@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         visitDate: {
           gte: new Date(),
         },
-        status: 'PENDING',
+        status: 'SCHEDULED',
       },
       include: {
         midwife: {
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
         }),
         visit.visitType,
         visit.midwife?.user.name || 'To be assigned',
-        visit.location || 'Clinic',
+        'Clinic',
       ]);
 
       pdf.addTable({

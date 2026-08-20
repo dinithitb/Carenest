@@ -63,12 +63,10 @@ export async function POST(req: NextRequest) {
         pregnancies: {
           where: { status: 'ACTIVE' },
           select: {
-            lmp: true,
-            edd: true,
-            gravidaNumber: true,
-            parityNumber: true,
+            lastMenstrualPeriod: true,
+            expectedDeliveryDate: true,
             highRisk: true,
-            complications: true,
+            medicalNotes: true,
           },
         },
         visits: {
@@ -87,18 +85,13 @@ export async function POST(req: NextRequest) {
               lte: dateFilter.endDate,
             },
           },
-          include: {
-            documentType: {
-              select: { name: true },
-            },
-          },
           orderBy: { scheduledDate: 'desc' },
         },
         children: {
           select: {
             name: true,
             gender: true,
-            dateOfBirth: true,
+            birthDate: true,
             birthWeight: true,
           },
         },
@@ -111,20 +104,20 @@ export async function POST(req: NextRequest) {
 
     const pregnancy = mother.pregnancies[0];
     const completedVisits = mother.visits.filter((v) => v.status === 'COMPLETED');
-    const upcomingVisits = mother.visits.filter((v) => v.status === 'PENDING' && new Date(v.visitDate) >= new Date());
+    const upcomingVisits = mother.visits.filter((v) => v.status === 'SCHEDULED' && new Date(v.visitDate) >= new Date());
     const completedVaccinations = mother.vaccinations.filter((v) => v.status === 'COMPLETED');
 
     // Calculate pregnancy week if pregnant
     let pregnancyWeek = 0;
     let daysRemaining = 0;
-    if (pregnancy?.lmp) {
-      const lmpDate = new Date(pregnancy.lmp);
+    if (pregnancy?.lastMenstrualPeriod) {
+      const lmpDate = new Date(pregnancy.lastMenstrualPeriod);
       const today = new Date();
       const daysSinceLMP = Math.floor((today.getTime() - lmpDate.getTime()) / (1000 * 60 * 60 * 24));
       pregnancyWeek = Math.floor(daysSinceLMP / 7);
       
-      if (pregnancy.edd) {
-        const eddDate = new Date(pregnancy.edd);
+      if (pregnancy.expectedDeliveryDate) {
+        const eddDate = new Date(pregnancy.expectedDeliveryDate);
         daysRemaining = Math.floor((eddDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       }
     }
@@ -146,7 +139,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Statistics Cards
-    const statsCards = [
+    const statsCards: { label: string; value: string | number; color: string }[] = [
       { label: 'Completed Visits', value: completedVisits.length, color: '#14B8A6' },
       { label: 'Vaccinations', value: completedVaccinations.length, color: '#3B82F6' },
       { label: 'Children', value: mother.children.length, color: '#EC4899' },
@@ -191,16 +184,16 @@ export async function POST(req: NextRequest) {
     // Current Pregnancy Information
     if (pregnancy) {
       pdf.addSectionTitle('Current Pregnancy Information');
-      pdf.addKeyValue('Last Menstrual Period (LMP)', new Date(pregnancy.lmp).toLocaleDateString());
-      pdf.addKeyValue('Expected Due Date (EDD)', new Date(pregnancy.edd).toLocaleDateString());
+      pdf.addKeyValue('Last Menstrual Period (LMP)', pregnancy.lastMenstrualPeriod ? new Date(pregnancy.lastMenstrualPeriod).toLocaleDateString() : 'N/A');
+      pdf.addKeyValue('Expected Due Date (EDD)', pregnancy.expectedDeliveryDate ? new Date(pregnancy.expectedDeliveryDate).toLocaleDateString() : 'N/A');
       pdf.addKeyValue('Current Week', `Week ${pregnancyWeek} of pregnancy`);
       if (daysRemaining > 0) {
         pdf.addKeyValue('Days Remaining', `${daysRemaining} days until expected due date`);
       }
-      pdf.addKeyValue('Gravida/Parity', `G${pregnancy.gravidaNumber}P${pregnancy.parityNumber}`);
+      pdf.addKeyValue('Gravida/Parity', `G${(pregnancy as any).gravidaNumber || 0}P${(pregnancy as any).parityNumber || 0}`);
       pdf.addKeyValue('Risk Level', pregnancy.highRisk ? 'High Risk - Extra care needed' : 'Normal Risk');
-      if (pregnancy.complications) {
-        pdf.addKeyValue('Notes', pregnancy.complications);
+      if (pregnancy.medicalNotes) {
+        pdf.addKeyValue('Notes', pregnancy.medicalNotes);
       }
       pdf.addSpace(5);
       pdf.addDivider();
@@ -213,7 +206,7 @@ export async function POST(req: NextRequest) {
         (index + 1).toString(),
         child.name || 'N/A',
         child.gender || 'N/A',
-        new Date(child.dateOfBirth).toLocaleDateString(),
+        new Date(child.birthDate).toLocaleDateString(),
         child.birthWeight ? `${child.birthWeight} kg` : 'N/A',
       ]);
 
@@ -302,7 +295,7 @@ export async function POST(req: NextRequest) {
     let summary = `This report covers your maternal health journey during ${dateRangeText}. `;
     
     if (pregnancy) {
-      summary += `You are currently ${pregnancyWeek} weeks pregnant with an expected due date of ${new Date(pregnancy.edd).toLocaleDateString()}. `;
+      summary += `You are currently ${pregnancyWeek} weeks pregnant with an expected due date of ${pregnancy.expectedDeliveryDate ? new Date(pregnancy.expectedDeliveryDate).toLocaleDateString() : 'N/A'}. `;
       if (daysRemaining > 0) {
         summary += `You have approximately ${daysRemaining} days until your expected delivery. `;
       }

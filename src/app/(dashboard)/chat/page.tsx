@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Badge } from '@/components/ui';
+import DashboardHero from '@/components/layout/DashboardHero';
 import { MessageSquare, Send, User, RefreshCw } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 
@@ -189,25 +190,30 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-180px)]">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-          <p className="text-gray-500">
-            {session?.user?.role === 'MOTHER' 
-              ? 'Chat with your assigned midwife' 
-              : session?.user?.role === 'MIDWIFE'
-              ? 'Chat with your assigned mothers'
-              : 'Messages'}
-          </p>
-        </div>
-        <Button variant="outline" className="font-semibold" onClick={() => fetchContacts()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <DashboardHero
+        title="Messages"
+        subtitle={
+          session?.user?.role === 'MOTHER'
+            ? 'Chat with your assigned midwife'
+            : session?.user?.role === 'MIDWIFE'
+            ? 'Chat with your assigned mothers'
+            : 'Communicate directly with registered members'
+        }
+        pillLabel="Live Chat"
+        actions={(
+          <Button
+            variant="outline"
+            className="!bg-white hover:!bg-gray-100 !text-gray-900 font-bold rounded-xl !border !border-gray-200 shadow-sm transition-all cursor-pointer"
+            onClick={() => fetchContacts()}
+          >
+            <RefreshCw className="h-4 w-4 mr-2 text-gray-700" />
+            Refresh
+          </Button>
+        )}
+      />
 
-      <div className="flex gap-4 h-full">
+      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-270px)] min-h-[520px]">
         {/* Contacts List */}
         <Card className="w-80 flex-shrink-0 overflow-hidden flex flex-col">
           <CardHeader className="border-b">

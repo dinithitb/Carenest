@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/components/ui';
+import DashboardHero from '@/components/layout/DashboardHero';
 import { Bell, Check, Trash2, ExternalLink, Calendar, MessageSquare, Syringe, Info, AlertTriangle } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 
@@ -94,7 +95,7 @@ export default function NotificationsPage() {
       case 'VACCINATION_REMINDER':
         return <Syringe className="h-5 w-5 text-purple-500" />;
       case 'CHAT':
-        return <MessageSquare className="h-5 w-5 text-green-500" />;
+        return <MessageSquare className="h-5 w-5 text-emerald-500" />;
       case 'ALERT':
         return <AlertTriangle className="h-5 w-5 text-red-500" />;
       case 'INFO':
@@ -109,15 +110,15 @@ export default function NotificationsPage() {
     
     switch (type) {
       case 'VISIT_REMINDER':
-        return 'bg-blue-50 hover:bg-blue-100';
+        return 'bg-blue-50/70 hover:bg-blue-100/70';
       case 'VACCINATION_REMINDER':
-        return 'bg-purple-50 hover:bg-purple-100';
+        return 'bg-purple-50/70 hover:bg-purple-100/70';
       case 'CHAT':
-        return 'bg-green-50 hover:bg-green-100';
+        return 'bg-emerald-50/70 hover:bg-emerald-100/70';
       case 'ALERT':
-        return 'bg-red-50 hover:bg-red-100';
+        return 'bg-red-50/70 hover:bg-red-100/70';
       default:
-        return 'bg-teal-50 hover:bg-teal-100';
+        return 'bg-teal-50/70 hover:bg-teal-100/70';
     }
   };
 
@@ -138,51 +139,52 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-500">
-            {unreadCount > 0 ? `${unreadCount} unread notifications` : 'All caught up!'}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {unreadCount > 0 && (
-            <Button variant="outline" onClick={markAllAsRead}>
-              <Check className="h-4 w-4 mr-2" />
+      <DashboardHero
+        title="Notifications"
+        subtitle={unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All caught up! No unread notifications.'}
+        pillLabel="Alerts"
+        actions={
+          unreadCount > 0 ? (
+            <Button
+              variant="outline"
+              className="!bg-white hover:!bg-gray-100 !text-gray-900 font-bold rounded-xl !border !border-gray-200 shadow-sm transition-all cursor-pointer"
+              onClick={markAllAsRead}
+            >
+              <Check className="h-4 w-4 mr-2 text-teal-600" />
               Mark All as Read
             </Button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 border-b pb-2">
+      <div className="flex gap-2">
         <button
           onClick={() => setFilter('ALL')}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+          className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
             filter === 'ALL' 
-              ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50' 
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-gray-900 text-white shadow-sm' 
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
           All ({notifications.length})
         </button>
         <button
           onClick={() => setFilter('UNREAD')}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+          className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
             filter === 'UNREAD' 
-              ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50' 
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-gray-900 text-white shadow-sm' 
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
           Unread ({unreadCount})
         </button>
         <button
           onClick={() => setFilter('READ')}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+          className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
             filter === 'READ' 
-              ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50' 
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-gray-900 text-white shadow-sm' 
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
           Read ({notifications.length - unreadCount})
