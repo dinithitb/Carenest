@@ -122,7 +122,8 @@ export default function LoginPage() {
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
 
-              <Link href="/forgot-password" className="text-sm text-teal-600 hover:text-teal-700">Forgot password?</Link>
+              {/* Forgot password feature coming soon */}
+              {/* <Link href="/forgot-password" className="text-sm text-teal-600 hover:text-teal-700">Forgot password?</Link> */}
             </div>
 
             <Button type="submit" className="w-full" isLoading={isLoading}>Sign In</Button>
